@@ -41,7 +41,7 @@ Give a ⭐️ if this project helped you!
 ## 📝 License
 
 Copyright © 2020 [sp1rit](https://github.com/sp1ritCS).<br />
-This project is [AGPL--3.0](https://github.com/sp1ritCS/libschulmanager/blob/master/LICENSE.md) licensed.
+This project is [AGPL-3.0](https://github.com/sp1ritCS/libschulmanager/blob/master/LICENSE.md) licensed.
 
 ***
 _This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
