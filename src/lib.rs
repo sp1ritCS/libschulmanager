@@ -1,6 +1,7 @@
 mod sm_req;
+pub mod timetable;
+mod errors;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, COOKIE};
-use std::collections::BTreeMap;
 
 pub struct SmUser {
     pub session: String,
@@ -9,71 +10,25 @@ pub struct SmUser {
     pub student_class_id: usize
 }
 
-enum SmLessonStatus {
-    Lesson,
-    Substitution(SmSubstitutionLesson),
-    Cancelled
-}
-
-struct SmSubject {
-    abbreviation: String,
-    name: String
-}
-
-struct SmTeacher {
-    abbreviation: String,
-    firstname: Option<String>,
-    lastname: Option<String>
-}
-
-struct SmLesson {
-    status: SmLessonStatus,
-    room: String,
-    subject: SmSubject,
-    teachers: Vec<SmTeacher>,
-    classes: Vec<String>,
-    student_group: Vec<String>,
-    comment: Option<String>,
-    subject_label: String,
-}
-struct SmSubstitutionLesson {
-    room: String,
-    subject: SmSubject,
-    teachers: Vec<SmTeacher>,
-    classes: Vec<String>,
-    student_group: Vec<String>,
-    comment: Option<String>,
-    subject_label: String,
-}
-
-/* smart */
-pub struct SmWeek {
-    monday: BTreeMap<usize, Vec<SmLesson>>,
-    tuesday: BTreeMap<usize, Vec<SmLesson>>,
-    wednesday: BTreeMap<usize, Vec<SmLesson>>,
-    thursday: BTreeMap<usize, Vec<SmLesson>>,
-    friday: BTreeMap<usize, Vec<SmLesson>>
-}
-
 pub struct SmTimetable {
     interna_timetable: Vec<sm_req::SmTimetableResp>
 }
 
 impl SmTimetable {
-    pub async fn new(user: SmUser) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new(user: SmUser, week: u32) -> std::result::Result<Self, Box<dyn std::error::Error>> {
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json;charset=UTF-8"));
         let cookies = format!("session={}; session.sig={}", user.session, user.session_sig);
         headers.insert(COOKIE, HeaderValue::from_str(&cookies).unwrap());
+        let body = vec![sm_req::TimetableBody::new(user.student_id, user.student_class_id, week)];
         let client = reqwest::Client::new();
         let resp: Vec<sm_req::SmTimetableResp> = client.post("https://login.schulmanager-online.de/api/calls")
             .headers(headers)
-            .body(format!("[{{\"moduleName\":\"schedules\",\"endpointName\":\"get-actual-lessons\",\"parameters\":{{\"student\":{{\"id\":{}}},\"start\":\"2020-09-28\",\"end\":\"2020-10-04\"}}}}]", user.student_id))
+            .body(serde_json::to_string(&body)?)
             .send()
             .await?
             .json()
             .await?;
-        println!("{:#?}", resp);
         Ok(SmTimetable{
             interna_timetable: resp
         })
@@ -87,14 +42,19 @@ impl SmTimetable {
         }
         success
     }
-    pub fn to_smart(self) -> SmWeek {
-
+    pub fn to_smart(self) -> Result<Vec<timetable::SmWeek>, Box<dyn std::error::Error>> {
+        let mut timetables: Vec<timetable::SmWeek> = vec![];
+        for timetable in self.interna_timetable {
+            timetables.push(timetable::SmWeek::from_interna(timetable)?);
+        }
+        Ok(timetables)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::{SmTimetable, SmUser};
+    use chrono::{Local, Datelike, IsoWeek};
     macro_rules! aw {
         ($e:expr) => {
             tokio_test::block_on($e)
@@ -108,6 +68,8 @@ mod tests {
             student_id: std::env::var("SM_TEST_ID").expect("SM_TEST_ID is not defined").parse().expect("Invalid Student ID"),
             student_class_id: std::env::var("SM_TEST_CLASSID").expect("SM_TEST_CLASSID").parse().expect("Invalid Class ID")
         };
-        assert!(aw!(SmTimetable::new(user)).unwrap().is_success())
+        let this_week: IsoWeek = Local::today().iso_week();
+        let timetable: SmTimetable = aw!(SmTimetable::new(user, this_week.week())).unwrap();
+        assert!(timetable.is_success());
     }
 }
