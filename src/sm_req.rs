@@ -1,25 +1,75 @@
+#![allow(non_snake_case)]
 use serde::{Serialize, Deserialize};
+use chrono::{Date, Weekday, Datelike, Local, TimeZone};
 
-#[derive(Serialize, Deserialize, Debug)]
+/*  Thanks to harmic for his brilliant stackoverflow answer
+    https://stackoverflow.com/questions/64174950/get-date-of-start-end-of-week */
+fn week_bounds(week: u32) -> (Date<Local>, Date<Local>) {
+    let current_year = Local::now().year();
+    let mon: Date<Local> = Local.isoywd(current_year, week, Weekday::Mon);
+    let sun: Date<Local> = Local.isoywd(current_year, week, Weekday::Sun);
+    (mon, sun)
+}
+/* Timetable REQ */
+
+#[derive(Serialize, Debug)]
+pub struct TimetableBodyParamsStudent {
+    pub id: usize,
+    pub classId: usize
+}
+
+#[derive(Serialize, Debug)]
+pub struct TimetableBodyParams {
+    pub student: TimetableBodyParamsStudent,
+    pub start: String,
+    pub end: String
+}
+
+#[derive(Serialize, Debug)]
+pub struct TimetableBody {
+    pub moduleName: String,
+    pub endpointName: String,
+    pub parameters: TimetableBodyParams
+}
+impl TimetableBody {
+    pub fn new(id: usize, class_id: usize, week: u32) -> Self {
+        let (mon, sun) = week_bounds(week);
+        TimetableBody {
+            moduleName: String::from("schedules"),
+            endpointName: String::from("get-actual-lessons"),
+            parameters: TimetableBodyParams {
+                student: TimetableBodyParamsStudent {
+                    id: id,
+                    classId: class_id
+                },
+                start: mon.format("%F").to_string(),
+                end: sun.format("%F").to_string()
+            }
+        }
+    }
+}
+
+/* Timetable RES */
+#[derive(Deserialize, Debug, Clone)]
 pub struct ClassHour {
     pub id: usize,
     pub number: String
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Room {
     pub id: usize,
     pub name: String
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Subject {
     pub id: usize,
     pub abbreviation: String,
     pub name: String
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Teacher {
     pub id: usize,
     pub abbreviation: String,
@@ -27,20 +77,20 @@ pub struct Teacher {
     pub lastname: Option<String>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Class {
     pub id: usize,
     pub name: String
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct StudentGroup {
     pub id: usize,
     pub name: String,
     pub classId: Option<usize>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ActualLesson {
     pub room: Room,
     pub subject: Subject,
@@ -53,7 +103,7 @@ pub struct ActualLesson {
     pub substitutionId: Option<usize>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct OriginalLesson {
     pub room: Room,
     pub subject: Subject,
@@ -65,7 +115,7 @@ pub struct OriginalLesson {
     pub lessonId: usize
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Datum {
     pub date: String,
     pub classHour: ClassHour,
@@ -76,7 +126,7 @@ pub struct Datum {
     pub isCancelled: Option<bool>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct SmTimetableResp {
     pub status: u16,
     pub data: Vec<Datum>
