@@ -4,10 +4,9 @@ use chrono::{Date, Weekday, Datelike, Local, TimeZone};
 
 /*  Thanks to harmic for his brilliant stackoverflow answer
     https://stackoverflow.com/questions/64174950/get-date-of-start-end-of-week */
-fn week_bounds(week: u32) -> (Date<Local>, Date<Local>) {
-    let current_year = Local::now().year();
-    let mon: Date<Local> = Local.isoywd(current_year, week, Weekday::Mon);
-    let sun: Date<Local> = Local.isoywd(current_year, week, Weekday::Sun);
+fn week_bounds(week: u32, year: i32) -> (Date<Local>, Date<Local>) {
+    let mon: Date<Local> = Local.isoywd(year, week, Weekday::Mon);
+    let sun: Date<Local> = Local.isoywd(year, week, Weekday::Sun);
     (mon, sun)
 }
 /* Timetable REQ */
@@ -32,8 +31,9 @@ pub struct TimetableBody {
     pub parameters: TimetableBodyParams
 }
 impl TimetableBody {
-    pub fn new(id: usize, class_id: usize, week: u32) -> Self {
-        let (mon, sun) = week_bounds(week);
+    pub fn new(id: usize, class_id: usize, week: u32, oyear: Option<i32>) -> Self {
+        let year = oyear.unwrap_or(Local::now().year());
+        let (mon, sun) = week_bounds(week, year);
         TimetableBody {
             moduleName: String::from("schedules"),
             endpointName: String::from("get-actual-lessons"),
@@ -91,6 +91,15 @@ pub struct StudentGroup {
 }
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct Event {
+    pub text: String,
+    pub teachers: Vec<Teacher>,
+    pub classes: Vec<Class>,
+    pub studentGroups: Vec<StudentGroup>,
+    pub absenceId: usize
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct ActualLesson {
     pub room: Room,
     pub subject: Subject,
@@ -99,7 +108,7 @@ pub struct ActualLesson {
     pub studentGroups: Vec<StudentGroup>,
     pub comment: Option<String>,
     pub subjectLabel: String,
-    pub lessonId: usize,
+    pub lessonId: Option<usize>,
     pub substitutionId: Option<usize>
 }
 
@@ -122,8 +131,10 @@ pub struct Datum {
     pub actualLesson: Option<ActualLesson>,
     pub comment: Option<String>,
     pub originalLessons: Option<Vec<OriginalLesson>>,
+    pub event: Option<Event>,
     pub isSubstitution: Option<bool>,
-    pub isCancelled: Option<bool>
+    pub isCancelled: Option<bool>,
+    pub isNew: Option<bool>
 }
 
 #[derive(Deserialize, Debug)]
