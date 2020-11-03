@@ -1,15 +1,13 @@
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
-pub enum SmAuthError {
+pub enum SmError {
     #[snafu(display("Unknown authentication issue"))]
     UnknownAuth,
+    #[snafu(display("Unauthenticated"))]
+    Unauthenticated,
     #[snafu(display("schulmanager-online.de returned statuscode '{}'", statuscode))]
-    NonvalidStatusCode { statuscode: u16 }
-}
-
-#[derive(Debug, Snafu)]
-pub enum SmO365Error {
+    NonvalidStatusCode { statuscode: u16 },
     #[snafu(display("Unknown Office SSO Error"))]
     UnknownMS,
     #[snafu(display("non-valid client Id"))]

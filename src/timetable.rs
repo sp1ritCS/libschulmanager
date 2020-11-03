@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use crate::sm_req::{SmTimetableResp, ActualLesson, OriginalLesson, Subject, Teacher, Class, StudentGroup, Event};
+use crate::sm_req::SmTimetableResponse::{Response, ActualLesson, OriginalLesson, Subject, Teacher, Class, StudentGroup, Event};
 use chrono::{NaiveDate, Datelike, Weekday};
 use std::clone::Clone;
 use serde::Serialize;
@@ -184,7 +184,7 @@ macro_rules! skip_none {
         match $res {
             Some(val) => val,
             None => {
-                eprintln!("Nothing was defined");
+                //eprintln!("Nothing was defined");
                 continue;
             }
         }
@@ -192,7 +192,7 @@ macro_rules! skip_none {
 }
 
 impl SmWeek {
-    pub fn from_interna(interna_timetable: SmTimetableResp) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_interna(interna_timetable: Response) -> std::result::Result<Self, Box<dyn std::error::Error>> {
         let mut week = Self {
             monday: BTreeMap::new(),
             tuesday: BTreeMap::new(),
