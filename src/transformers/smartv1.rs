@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use crate::sm_req::SmTimetableResponse::{Response, ActualLesson, OriginalLesson, Subject, Teacher, Class, StudentGroup, Event};
+use crate::sm_req::SmTimetableResponse::{Response, ActualLesson, OriginalLesson, Subject, Teacher, Class, StudentGroup};
 use chrono::{NaiveDate, Datelike, Weekday};
 use std::clone::Clone;
 use serde::Serialize;
@@ -20,7 +20,6 @@ fn string_vec_calc(classes_s: Vec<Class>, groups: Vec<StudentGroup>) -> (Vec<Str
 enum SmLessonStatus {
     Lesson,
     Substitution(SmSubstitutedLesson),
-    Event(SmEvent),
     Cancelled
 }
 
@@ -146,25 +145,6 @@ impl SmSubstitutedLesson {
             orig = Some(SmSubstitutedLesson::from_orig(lesson.clone(), comment.clone()))
         }
         orig
-    }
-}
-
-#[derive(Serialize, Clone, Debug)]
-struct SmEvent {
-    text: String,
-    teachers: Vec<SmTeacher>,
-    classes: Vec<String>,
-    student_groups: Vec<String>
-}
-impl SmEvent {
-    pub fn from_orig(event: Event) -> Self {
-        let (classes, student_groups) = string_vec_calc(event.classes, event.studentGroups);
-        SmEvent {
-            text: event.text,
-            teachers: SmTeacher::new_vec(event.teachers),
-            classes: classes,
-            student_groups: student_groups
-        }
     }
 }
 

@@ -25,6 +25,7 @@ impl O365Auth {
     pub async fn new(req_url: String, app_id: String) -> Result<Self, Box<dyn std::error::Error>> {
         let client = reqwest::ClientBuilder::new()
             .cookie_store(true)
+            //.danger_accept_invalid_certs(true)
             //.redirect(reqwest::redirect::Policy::none())
             .build()?;
         let initial = client.get(&req_url).send().await?;

@@ -1,6 +1,6 @@
 pub mod sm_req;
 pub mod o365;
-pub mod timetable;
+pub mod transformers;
 pub mod errors;
 use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE, COOKIE};
 
@@ -108,13 +108,13 @@ impl SmTimetable {
         }
         success
     }
-    pub fn to_smart(self) -> Result<Vec<timetable::SmWeek>, Box<dyn std::error::Error>> {
+    /*pub fn to_smart(self) -> Result<Vec<timetable::SmWeek>, Box<dyn std::error::Error>> {
         let mut timetables: Vec<timetable::SmWeek> = vec![];
         for timetable in self.interna_timetable {
             timetables.push(timetable::SmWeek::from_interna(timetable)?);
         }
         Ok(timetables)
-    }
+    }*/
 }
 
 #[cfg(test)]
@@ -142,7 +142,8 @@ mod tests {
         let file = std::fs::File::open(PATH)?;
         let reader = std::io::BufReader::new(file);
         let timetable: SmTimetable = SmTimetable::from_reader(Box::new(reader))?;
-        let _smart = timetable.to_smart()?;
+        let _smart = timetable.to_smart_v2_daymap()?;
+        //let _smart = timetable.to_smart_v2_weekdays()?;
         println!("{:#?}", _smart);
         Ok(())
     }
@@ -168,5 +169,8 @@ mod tests {
             session_sig: String::from(std::env::var("SM_TEST_SESSION_SIG").expect("SM_TEST_SESSION_SIG is not defined"))
         };
         let schulmanager: Schulmanager = aw!(Schulmanager::use_session(user)).unwrap();
+        let this_week: IsoWeek = Local::today().iso_week();
+        let timetable: SmTimetable = aw!(SmTimetable::new(schulmanager, this_week.week(), None)).unwrap();
+        assert!(timetable.is_success());
     }
 }
