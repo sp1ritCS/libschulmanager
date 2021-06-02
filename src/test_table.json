@@ -1,0 +1,543 @@
+[{
+  "status": 200,
+  "data": [
+      {
+        "date": "2020-09-28",
+        "classHour": {
+          "id": 8942,
+          "number": "3"
+        },
+        "actualLesson": {
+          "room": {
+            "id": 5691,
+            "name": "Room 1"
+          },
+          "subject": {
+            "id": 11571,
+            "abbreviation": "L1",
+            "name": "Lesson 1"
+          },
+          "teachers": [
+            {
+              "id": 6397,
+              "abbreviation": "T1",
+              "firstname": "Teacher",
+              "lastname": "One"
+            }
+          ],
+          "classes": [
+            {
+              "id": 5919,
+              "name": "C1"
+            }
+          ],
+          "studentGroups": [
+            {
+              "id": 32567,
+              "name": "L1_C1",
+              "classId": null
+            }
+          ],
+          "comment": null,
+          "subjectLabel": "L1",
+          "lessonId": 18466
+        }
+      },
+      {
+        "date": "2020-09-28",
+        "classHour": {
+          "id": 11603,
+          "number": "4"
+        },
+        "actualLesson": {
+          "room": {
+            "id": 5691,
+            "name": "Room 1"
+          },
+          "subject": {
+            "id": 11571,
+            "abbreviation": "L1",
+            "name": "Lesson 1"
+          },
+          "teachers": [
+            {
+              "id": 6397,
+              "abbreviation": "T1",
+              "firstname": "Teacher",
+              "lastname": "One"
+            }
+          ],
+          "classes": [
+            {
+              "id": 5919,
+              "name": "C1"
+            }
+          ],
+          "studentGroups": [
+            {
+              "id": 32567,
+              "name": "L1_C1",
+              "classId": null
+            }
+          ],
+          "comment": null,
+          "subjectLabel": "L1",
+          "lessonId": 11603
+        }
+      },
+      {
+        "date": "2020-10-02",
+        "comment": null,
+        "classHour": {
+          "id": 2186,
+          "number": "1"
+        },
+        "originalLessons": [
+          {
+            "room": {
+              "id": 10158,
+              "name": "Room 4"
+            },
+            "subject": {
+              "id": 19898,
+              "abbreviation": "L8",
+              "name": "Lesson 8",
+              "isPseudoSubject": false
+            },
+            "teachers": [
+              {
+                "id": 14034,
+                "abbreviation": "T9",
+                "firstname": "Teacher",
+                "lastname": "Nine"
+              }
+            ],
+            "classes": [
+              {
+                "id": 5919,
+                "name": "C1"
+              }
+            ],
+            "studentGroups": [
+              {
+                "id": 26960,
+                "name": "L8_C1",
+                "classId": null
+              }
+            ],
+            "comment": null,
+            "subjectLabel": "L8",
+            "lessonId": 30195
+          }
+        ],
+        "isCancelled": true
+      },
+      {
+        "date": "2020-09-28",
+        "classHour": {
+          "id": 2186,
+          "number": "1"
+        },
+        "actualLesson": {
+          "room": {
+            "id": 7953,
+            "name": "Room 2"
+          },
+          "subject": {
+            "id": 11176,
+            "abbreviation": "L2",
+            "name": "Lesson 2"
+          },
+          "teachers": [
+            {
+              "id": 17574,
+              "abbreviation": "T2",
+              "firstname": "Teacher",
+              "lastname": "Two"
+            }
+          ],
+          "classes": [
+            {
+              "id": 5919,
+              "name": "C1"
+            }
+          ],
+          "studentGroups": [
+            {
+              "id": 16820,
+              "name": "L2_C1_1",
+              "classId": null
+            }
+          ],
+          "comment": null,
+          "subjectLabel": "L2",
+          "lessonId": 17106
+        }
+      },
+      {
+        "date": "2020-09-30",
+        "comment": null,
+        "classHour": {
+          "id": 11603,
+          "number": "4"
+        },
+        "originalLessons": [
+          {
+            "room": {
+              "id": 14025,
+              "name": "Room 5"
+            },
+            "subject": {
+              "id": 32743,
+              "abbreviation": "L6",
+              "name": "Lesson 6",
+              "isPseudoSubject": false
+            },
+            "teachers": [
+              {
+                "id": 22024,
+                "abbreviation": "T7",
+                "firstname": "Teacher",
+                "lastname": "Seven"
+              }
+            ],
+            "classes": [
+              {
+                "id": 5919,
+                "name": "C1"
+              }
+            ],
+            "studentGroups": [
+              {
+                "id": 19822,
+                "name": "L6_C1",
+                "classId": null
+              }
+            ],
+            "comment": null,
+            "subjectLabel": "L6",
+            "lessonId": 22181
+          }
+        ],
+        "isCancelled": true
+      },
+      {
+        "date": "2020-09-28",
+        "classHour": {
+          "id": 5740,
+          "number": "10"
+        },
+        "actualLesson": {
+          "room": {
+            "id": 19759,
+            "name": "Room 3"
+          },
+          "subject": {
+            "id": 19927,
+            "abbreviation": "L3",
+            "name": "Lesson 3"
+          },
+          "teachers": [
+            {
+              "id": 19049,
+              "abbreviation": "T3",
+              "firstname": "Teacher",
+              "lastname": "Three"
+            }
+          ],
+          "classes": [
+            {
+              "id": 5919,
+              "name": "C1"
+            }
+          ],
+          "studentGroups": [
+            {
+              "id": 18428,
+              "name": "L3_C1_1",
+              "classId": null
+            }
+          ],
+          "comment": null,
+          "subjectLabel": "L3",
+          "lessonId": 32100
+        }
+      },
+      {
+        "date": "2020-09-28",
+        "classHour": {
+          "id": 4466,
+          "number": "11"
+        },
+        "actualLesson": {
+          "room": {
+            "id": 19759,
+            "name": "Room 3"
+          },
+          "subject": {
+            "id": 19927,
+            "abbreviation": "L3",
+            "name": "Lesson 3"
+          },
+          "teachers": [
+            {
+              "id": 19049,
+              "abbreviation": "T3",
+              "firstname": "Teacher",
+              "lastname": "Three"
+            }
+          ],
+          "classes": [
+            {
+              "id": 5919,
+              "name": "C1"
+            }
+          ],
+          "studentGroups": [
+            {
+              "id": 18428,
+              "name": "L3_C1_1",
+              "classId": null
+            }
+          ],
+          "comment": null,
+          "subjectLabel": "L3",
+          "lessonId": 26481
+        }
+      },
+      {
+        "date": "2020-09-28",
+        "classHour": {
+          "id": 5533,
+          "number": "9"
+        },
+        "actualLesson": {
+          "room": {
+            "id": 10158,
+            "name": "Room 4"
+          },
+          "subject": {
+            "id": 11029,
+            "abbreviation": "L4",
+            "name": "Lesson 4"
+          },
+          "teachers": [
+            {
+              "id": 14226,
+              "abbreviation": "T4",
+              "firstname": "Teacher",
+              "lastname": "Four"
+            }
+          ],
+          "classes": [
+            {
+              "id": 5919,
+              "name": "C1"
+            }
+          ],
+          "studentGroups": [
+            {
+              "id": 16555,
+              "name": "L4_C1",
+              "classId": null
+            }
+          ],
+          "comment": null,
+          "subjectLabel": "L4",
+          "lessonId": 3154092
+        }
+      },
+      {
+        "date": "2020-09-30",
+        "comment": "Substiution Comment",
+        "classHour": {
+          "id": 2253,
+          "number": "6"
+        },
+        "actualLesson": {
+          "room": {
+            "id": 14025,
+            "name": "Room 5"
+          },
+          "subject": {
+            "id": 10297,
+            "abbreviation": "L5",
+            "name": "Lesson 5",
+            "isPseudoSubject": false
+          },
+          "teachers": [
+            {
+              "id": 11174,
+              "abbreviation": "T6",
+              "firstname": "Teacher",
+              "lastname": "Six"
+            }
+          ],
+          "classes": [
+            {
+              "id": 5919,
+              "name": "C1"
+            }
+          ],
+          "studentGroups": [],
+          "comment": "Comment of subsition Lesson",
+          "subjectLabel": "L2",
+          "substitutionId": 22013
+        },
+        "originalLessons": [
+          {
+            "room": {
+              "id": 14025,
+              "name": "Room 5"
+            },
+            "subject": {
+              "id": 10297,
+              "abbreviation": "L5",
+              "name": "Lesson 5",
+              "isPseudoSubject": false
+            },
+            "teachers": [
+              {
+                "id": 16479,
+                "abbreviation": "T5",
+                "firstname": "Teacher",
+                "lastname": "Five"
+              }
+            ],
+            "classes": [
+              {
+                "id": 5919,
+                "name": "C1"
+              }
+            ],
+            "studentGroups": [
+              {
+                "id": 25825,
+                "name": "L5_C1",
+                "classId": null
+              }
+            ],
+            "comment": null,
+            "subjectLabel": "L5",
+            "lessonId": 25628
+          }
+        ],
+        "isSubstitution": true
+      },
+      {
+        "date": "2020-10-02",
+        "comment": null,
+        "classHour": {
+          "id": 2949,
+          "number": "2"
+        },
+        "originalLessons": [
+          {
+            "room": {
+              "id": 10158,
+              "name": "Room 4"
+            },
+            "subject": {
+              "id": 19898,
+              "abbreviation": "L8",
+              "name": "Lesson 8",
+              "isPseudoSubject": false
+            },
+            "teachers": [
+              {
+                "id": 14034,
+                "abbreviation": "T9",
+                "firstname": "Teacher",
+                "lastname": "Nine"
+              }
+            ],
+            "classes": [
+              {
+                "id": 5919,
+                "name": "C1"
+              }
+            ],
+            "studentGroups": [
+              {
+                "id": 26960,
+                "name": "L8_C1",
+                "classId": null
+              }
+            ],
+            "comment": null,
+            "subjectLabel": "L8",
+            "lessonId": 31399
+          }
+        ],
+        "isCancelled": true
+      },
+      {
+        "date": "2020-10-02",
+        "classHour": {
+          "id": 2186,
+          "number": "1"
+        },
+        "event": {
+          "text": "Event (Room 1)",
+          "teachers": [
+            {
+              "id": 24687,
+              "abbreviation": "T8",
+              "firstname": "Teacher",
+              "lastname": "Eight"
+            }
+          ],
+          "classes": [
+            {
+              "id": 5919,
+              "name": "C1"
+            }
+          ],
+          "studentGroups": [
+            {
+              "id": 30762,
+              "name": "C1",
+              "classId": 5919
+            }
+          ],
+          "absenceId": 24707
+        },
+        "isSubstitution": false,
+        "isNew": true
+      },
+      {
+        "date": "2020-10-02",
+        "classHour": {
+          "id": 2949,
+          "number": "2"
+        },
+        "event": {
+          "text": "Event (Room 1)",
+          "teachers": [
+            {
+              "id": 24687,
+              "abbreviation": "T8",
+              "firstname": "Teacher",
+              "lastname": "Eight"
+            }
+          ],
+          "classes": [
+            {
+              "id": 5919,
+              "name": "C1"
+            }
+          ],
+          "studentGroups": [
+            {
+              "id": 30762,
+              "name": "C1",
+              "classId": 5919
+            }
+          ],
+          "absenceId": 24707
+        },
+        "isSubstitution": false,
+        "isNew": true
+      }
+  ]
+}]

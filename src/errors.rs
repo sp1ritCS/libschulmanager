@@ -8,6 +8,8 @@ pub enum SmError {
     Unauthenticated,
     #[snafu(display("schulmanager-online.de returned statuscode '{}'", statuscode))]
     NonvalidStatusCode { statuscode: u16 },
+    #[snafu(display("schuldmanager-online.de did not return a json webtoken"))]
+    NoJwt,
     #[snafu(display("Unknown Office SSO Error"))]
     UnknownMS,
     #[snafu(display("non-valid client Id"))]

@@ -26,7 +26,7 @@ pub mod SmLoginStatus {
     #[derive(Deserialize, Debug, Clone)]
     pub struct Status {
         pub isAuthenticated: bool,
-        pub user: User
+        pub user: Option<User>
     }
 }
 
