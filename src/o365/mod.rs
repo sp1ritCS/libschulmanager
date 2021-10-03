@@ -1,8 +1,9 @@
 mod response;
+use anyhow::Result;
 use html5ever::tendril::stream::TendrilSink;
 use kuchiki;
+use isahc::{prelude::*, HttpClient};
 
-#[macro_use]
 macro_rules! skip_none {
     ($res:expr) => {
         match $res {
@@ -17,25 +18,24 @@ macro_rules! skip_none {
 
 #[derive(Debug, Clone)]
 pub struct O365Auth {
-    pub req_client: reqwest::Client,
+    pub req_client: HttpClient,
     o365_app_id: String,
     data: response::InitO365
 }
 impl O365Auth {
-    pub async fn new(req_url: String, app_id: String) -> Result<Self, Box<dyn std::error::Error>> {
-        let client = reqwest::ClientBuilder::new()
-            .cookie_store(true)
-            //.danger_accept_invalid_certs(true)
-            //.redirect(reqwest::redirect::Policy::none())
+    pub async fn new(req_url: String, app_id: String) -> Result<Self> {
+        let client = HttpClient::builder()
+            .cookies()
+            .redirect_policy(isahc::config::RedirectPolicy::Follow)
             .build()?;
-        let initial = client.get(&req_url).send().await?;
+        let mut initial = client.get_async(&req_url).await?;
         Ok(O365Auth {
             req_client: client,
             o365_app_id: app_id.to_string(),
             data: O365Auth::parse_page(initial.text().await?).await?
         })
     }
-    async fn parse_page(data: String) -> Result<response::InitO365, Box<dyn std::error::Error>> {
+    async fn parse_page(data: String) -> Result<response::InitO365> {
         let dom = kuchiki::parse_html()
             .from_utf8()
             .read_from(&mut data.as_bytes())?;
@@ -51,13 +51,19 @@ impl O365Auth {
         let parsed: response::InitO365 = serde_json::from_str(&config_serialized)?;
         Ok(parsed)
     }
-    pub async fn login(&self, email: String, password: String) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn login(&self, email: String, password: String) -> Result<()> {
         let login_params = [("login", &email), ("passwd", &password), ("canary", &self.data.canary), ("ctx", &self.data.sCtx), ("hpgrequestid", &self.data.sessionId), ("flowToken", &self.data.sFT)];
         let post_url: String = format!("https://login.microsoftonline.com/{}/login", self.o365_app_id);
-        let _login_req = self.req_client.post(&post_url)
-            .form(&login_params)
-            .send()
-            .await?;
-        Ok(())
+
+        let body = serde_urlencoded::to_string(&login_params)?;
+
+        let login_req = self.req_client.post_async(&post_url, body).await?;
+
+        if login_req.headers().get("x-ms-request-id").is_some() {
+        	// still on M$ server, likely incorrect auth data
+        	Err(crate::errors::SmError::InvalidMSCredentials.into())
+        } else {
+        	Ok(())
+        }
     }
 }

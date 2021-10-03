@@ -24,9 +24,9 @@ pub enum TimetableElement {
 }
 
 #[derive(Serialize, Clone, Debug)]
-struct Subject {
-    abbreviation: String,
-    name: String
+pub struct Subject {
+    pub abbreviation: String,
+    pub name: String
 }
 impl Subject {
     pub fn new(subj: InternaSubject) -> Self {
@@ -38,10 +38,10 @@ impl Subject {
 }
 
 #[derive(Serialize, Clone, Debug)]
-struct Teacher {
-    abbreviation: String,
-    firstname: Option<String>,
-    lastname: Option<String>
+pub struct Teacher {
+    pub abbreviation: String,
+    pub firstname: Option<String>,
+    pub lastname: Option<String>
 }
 impl Teacher {
     pub fn new(teacher: InternaTeacher) -> Self {
@@ -62,13 +62,13 @@ impl Teacher {
 
 #[derive(Serialize, Clone, Debug)]
 pub struct Lesson {
-    room: String,
-    subject: Subject,
-    teachers: Vec<Teacher>,
-    classes: Vec<String>,
-    student_groups: Vec<String>,
-    comment: Option<String>,
-    subject_label: String,
+    pub room: String,
+    pub subject: Subject,
+    pub teachers: Vec<Teacher>,
+    pub classes: Vec<String>,
+    pub student_groups: Vec<String>,
+    pub comment: Option<String>,
+    pub subject_label: String,
 }
 impl Lesson {
     pub fn from_actual(lesson: InternaActualLesson, comment: Option<String>) -> Self {
@@ -106,10 +106,10 @@ impl Lesson {
 
 #[derive(Serialize, Clone, Debug)]
 pub struct Event {
-    text: String,
-    teachers: Vec<Teacher>,
-    classes: Vec<String>,
-    student_groups: Vec<String>
+    pub text: String,
+    pub teachers: Vec<Teacher>,
+    pub classes: Vec<String>,
+    pub student_groups: Vec<String>
 }
 impl Event {
     pub fn new(event: InternaEvent) -> Self {
@@ -123,7 +123,6 @@ impl Event {
     }
 }
 
-#[macro_use]
 macro_rules! skip_none {
     ($res:expr) => {
         match $res {
@@ -147,7 +146,7 @@ fn check_treemap(map: &mut BTreeMap<usize, Vec<TimetableElement>>, key: usize, v
 
 #[derive(Serialize, Clone, Debug)]
 pub struct DayMap {
-    map: BTreeMap<NaiveDate, BTreeMap<usize, Vec<TimetableElement>>>
+    pub map: BTreeMap<NaiveDate, BTreeMap<usize, Vec<TimetableElement>>>
 }
 impl DayMap {
     pub fn from_interna(interna_timetable: Response) -> std::result::Result<Self, Box<dyn std::error::Error>> {
@@ -181,11 +180,11 @@ impl DayMap {
 
 #[derive(Serialize, Clone, Debug)]
 pub struct Weekdays {
-    monday: BTreeMap<usize, Vec<TimetableElement>>,
-    tuesday: BTreeMap<usize, Vec<TimetableElement>>,
-    wednesday: BTreeMap<usize, Vec<TimetableElement>>,
-    thursday: BTreeMap<usize, Vec<TimetableElement>>,
-    friday: BTreeMap<usize, Vec<TimetableElement>>
+    pub monday: BTreeMap<usize, Vec<TimetableElement>>,
+    pub tuesday: BTreeMap<usize, Vec<TimetableElement>>,
+    pub wednesday: BTreeMap<usize, Vec<TimetableElement>>,
+    pub thursday: BTreeMap<usize, Vec<TimetableElement>>,
+    pub friday: BTreeMap<usize, Vec<TimetableElement>>
 }
 impl Weekdays {
     pub fn from_interna(interna_timetable: Response) -> std::result::Result<Self, Box<dyn std::error::Error>> {

@@ -1,17 +1,21 @@
-use snafu::Snafu;
+use thiserror::Error;
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, Error)]
 pub enum SmError {
-    #[snafu(display("Unknown authentication issue"))]
+    #[error("Unknown authentication issue")]
     UnknownAuth,
-    #[snafu(display("Unauthenticated"))]
+    #[error("Unauthenticated")]
     Unauthenticated,
-    #[snafu(display("schulmanager-online.de returned statuscode '{}'", statuscode))]
+    #[error("schulmanager-online.de returned statuscode '{}'", statuscode)]
     NonvalidStatusCode { statuscode: u16 },
-    #[snafu(display("schuldmanager-online.de did not return a json webtoken"))]
+    #[error("schuldmanager-online.de did not return a json webtoken")]
     NoJwt,
-    #[snafu(display("Unknown Office SSO Error"))]
+    #[error("schuldmanager-online.de did not return any data")]
+    NoData,
+    #[error("Unknown Office SSO Error")]
     UnknownMS,
-    #[snafu(display("non-valid client Id"))]
+    #[error("Incorrect Microsoft username or password")]
+    InvalidMSCredentials,
+    #[error("non-valid client Id")]
     NonvalidAppId
 }

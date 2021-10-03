@@ -175,3 +175,102 @@ pub mod SmTimetableResponse {
         pub data: Vec<Datum>
     }
 }
+
+pub mod SmCallRequest {
+    use serde::Serialize;
+
+    #[derive(Serialize, Debug)]
+    pub struct SmCallRequestActionParams {
+    	pub attributes: Vec<String>
+    }
+
+    #[derive(Serialize, Debug)]
+    pub struct SmCallRequestAction {
+    	pub model: String,
+    	pub action: String,
+    	pub parameters: Vec<SmCallRequestActionParams>
+    }
+
+    #[derive(Serialize, Debug)]
+    pub struct SmCallRequestParams {
+    	pub action: SmCallRequestAction
+    }
+
+    #[derive(Serialize, Debug)]
+    pub struct SmCallRequest {
+        pub endpointName: String,
+        pub parameters: SmCallRequestParams
+    }
+
+    #[derive(Serialize, Debug)]
+    pub struct Body {
+        pub bundleVersion: String,
+        pub requests: Vec<SmCallRequest>
+    }
+    impl Body {
+        pub fn new_hours_body() -> Self {
+        	Self {
+        		bundleVersion: String::from("fee1dead"),
+        		requests: vec![SmCallRequest {
+        			endpointName: String::from("poqa"),
+        			parameters: SmCallRequestParams {
+        				action: SmCallRequestAction {
+        					model: String::from("main/class-hour"),
+        					action: String::from("findAll"),
+        					parameters: vec![SmCallRequestActionParams {
+        						attributes: vec![
+        							String::from("number"),
+        							String::from("from"),
+        							String::from("until"),
+        							String::from("fromByDay"),
+        							String::from("untilByDay")
+        						]
+        					}]
+        				}
+        			}
+        		}]
+        	}
+        }
+    }
+}
+
+pub mod SmHoursResponse {
+	use serde::{Deserialize, de::{self, Deserializer}};
+	fn from_str<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+		where T: std::str::FromStr,
+			T::Err: std::fmt::Display,
+			D: Deserializer<'de>
+	{
+		let s = String::deserialize(deserializer)?;
+		T::from_str(&s).map_err(de::Error::custom)
+	}
+
+	#[derive(Deserialize, Debug)]
+	pub struct LessonHours {
+		#[serde(deserialize_with = "from_str")]
+		pub number: usize,
+		pub from: String,
+		pub until: String,
+		pub fromByDay: Vec<String>,
+		pub untilByDay: Vec<String>,
+		pub id: usize
+	}
+
+	#[derive(Deserialize, Debug)]
+	pub struct SmResult {
+		pub status: u16,
+		pub data: Vec<LessonHours>
+	}
+
+	#[derive(Deserialize, Debug)]
+	pub struct Results {
+		pub status: u16,
+		pub data: SmResult
+	}
+
+	#[derive(Deserialize, Debug)]
+	pub struct Response {
+		pub results: Vec<Results>,
+		pub systemStatusMessages: Vec<serde_json::Value>
+	}
+}

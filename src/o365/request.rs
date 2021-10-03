@@ -8,7 +8,7 @@ pub struct Cookies {
 pub struct AuthBody {
     login: String,
     loginfmt: String,
-    type: String,
+    r#type: String,
     LoginOptions: String,
     ps: String,
     passwd: String,
