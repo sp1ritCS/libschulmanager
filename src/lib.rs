@@ -1,8 +1,11 @@
-pub mod sm_req;
+pub mod sm;
 #[cfg(feature = "microsoft")]
 pub mod o365;
 pub mod transformers;
 pub mod errors;
+use sm::{RequestManager, ResultBody};
+use sm::{Timetable, TimetableResult};
+use sm::{Hours, HoursResult};
 use isahc::{prelude::*, HttpClient, cookies::CookieJar, Request};
 use http::{header::{self, HeaderMap, HeaderValue}, method::Method};
 use anyhow::Result;
@@ -33,7 +36,7 @@ pub struct Schulmanager {
     pub student_id: usize,
     pub student_class_id: usize
 }
-impl Schulmanager {
+impl <'l> Schulmanager {
 	pub async fn new(auth: ClientAuthMethod<'_>) -> Result<Self> {
 		let (client, auth) = match auth {
 			ClientAuthMethod::CookieAuth(jar) => {
@@ -68,9 +71,9 @@ impl Schulmanager {
 		set_json(get_user_request.headers_mut());
 		set_jwt(get_user_request.headers_mut(), jwt.to_str()?)?;
 
-		let get_user: sm_req::SmLoginStatus::Status = client.send_async(get_user_request).await?
+		let get_user: sm::LoginStatus = client.send_async(get_user_request).await?
 			.json().await?;
-		if !get_user.isAuthenticated {
+		if !get_user.is_authenticated {
             Err(Box::new(errors::SmError::Unauthenticated).into())
         }else{
             match get_user.user {
@@ -78,8 +81,8 @@ impl Schulmanager {
                 	Ok(Schulmanager {
                 		client,
                 		token: jwt.to_str()?.to_owned(),
-                		student_id: user.associatedStudent.id,
-                		student_class_id: user.associatedStudent.classId
+                		student_id: user.associated_student.id,
+                		student_class_id: user.associated_student.class_id
                 	})
                 },
                 None => Err(Box::new(errors::SmError::UnknownAuth).into())
@@ -99,95 +102,98 @@ impl Schulmanager {
         Self::new(ClientAuthMethod::JwtAuth(token)).await
     }
 
-	pub async fn get_timetable(&self, week: u32, year: Option<i32>) -> Result<SmTimetable> {
-		let body = sm_req::SmTimetableRequest::Body::new_timetable_body(self.student_id, self.student_class_id, week, year);
+    pub async fn make_request(&'l self, mgr: &'l mut RequestManager<'l>) -> Result<()> {
+    	let body: String = {
+    		let body = mgr.get_request()?;
+    		serde_json::to_string(&body)?
+    	};
 
-		let mut get_timetable_request = Request::builder()
+    	let mut request = Request::builder()
 			.method(Method::POST)
 			.uri("https://login.schulmanager-online.de/api/calls")
-			.body(serde_json::to_string(&body)?)?;
-		set_json(get_timetable_request.headers_mut());
-		set_jwt(get_timetable_request.headers_mut(), &self.token)?;
+			.body(body)?;
+		set_json(request.headers_mut());
+		set_jwt(request.headers_mut(), &self.token)?;
 
-		let resp = self.client.send_async(get_timetable_request).await?
+		let resp: ResultBody = self.client.send_async(request).await?
 			.json().await?;
 
-		Ok(SmTimetable{
-			interna_timetable: resp
+		mgr.get_results(resp)
+    }
+
+	pub async fn get_timetable(&self, week: u32, year: Option<i32>) -> Result<SmTimetable> {
+		let mut mgr = RequestManager::new();
+
+		let mut params = Timetable::new(self.student_id, self.student_class_id, week, year);
+		mgr.add_timetable(&mut params).expect("TODO");
+
+		self.make_request(&mut mgr).await?;
+		Ok(SmTimetable {
+			interna_timetable: params.get()?
 		})
 	}
 
 	pub async fn get_hours(&self) -> Result<SmHours> {
-		let body = sm_req::SmCallRequest::Body::new_hours_body();
+		let mut mgr = RequestManager::new();
 
-		let mut get_timetable_request = Request::builder()
-			.method(Method::POST)
-			.uri("https://login.schulmanager-online.de/api/calls")
-			.body(serde_json::to_string(&body)?)?;
-		set_json(get_timetable_request.headers_mut());
-		set_jwt(get_timetable_request.headers_mut(), &self.token)?;
+		let mut params = Hours::new();
+		mgr.add_hours(&mut params).expect("TODO");
 
-		let resp: sm_req::SmHoursResponse::Response = self.client.send_async(get_timetable_request).await?
-			.json().await?;
+		self.make_request(&mut mgr).await?;
 
-		Ok(SmHours{
-			interna_response: resp
-		})
+		Ok(SmHours(params.get()?))
 	}
 }
 
 pub struct SmTimetable {
-	interna_timetable: sm_req::SmTimetableResponse::Response
+	interna_timetable: TimetableResult
 }
 
 impl SmTimetable {
     pub fn from_reader(reader: Box<dyn std::io::BufRead>) -> std::result::Result<Self, Box<dyn std::error::Error>> {
-        Ok(SmTimetable{
-            interna_timetable: serde_json::from_reader(reader)?
-        })
-    }
-    pub fn is_success(&self) -> bool {
-        let mut success: bool = true;
-        for table in &self.interna_timetable.results {
-            if table.status < 200 || table.status >= 300 {
-                success = false;
-            }
-        }
-        success
+        let result: ResultBody = serde_json::from_reader(reader)?;
+        let mut mgr = RequestManager::new();
+
+		let mut params = Timetable::new(0, 0, 1, None);
+		mgr.add_timetable(&mut params)?;
+
+		mgr.get_results(result)?;
+
+		Ok(SmTimetable {
+			interna_timetable: params.get()?
+		})
     }
 }
 
-pub struct SmHours {
-	interna_response: sm_req::SmHoursResponse::Response
-}
+pub struct SmHours(HoursResult);
 
 use std::collections::BTreeMap;
 use chrono::NaiveTime;
 
-pub type Hours = Vec<(NaiveTime, NaiveTime)>;
-pub type HoursMap = BTreeMap<usize, Hours>;
+pub type SchoolHours = Vec<(NaiveTime, NaiveTime)>;
+pub type SchoolHoursMap = BTreeMap<usize, SchoolHours>;
 
 impl SmHours {
 	pub fn from_reader(reader: Box<dyn std::io::BufRead>) -> Result<Self> {
-        Ok(SmHours{
-            interna_response: serde_json::from_reader(reader)?
-        })
+		let result: ResultBody = serde_json::from_reader(reader)?;
+        let mut mgr = RequestManager::new();
+
+        let mut params = Hours::new();
+		mgr.add_hours(&mut params)?;
+
+		mgr.get_results(result)?;
+		Ok(SmHours(params.get()?))
     }
     pub fn is_success(&self) -> bool {
-        let mut success: bool = true;
-        for request in &self.interna_response.results {
-            if request.status < 200 || request.status >= 300 {
-                success = false;
-            }
-        }
-        success
+        let status = self.0.status;
+        status >= 200 && status < 300
     }
 
-    pub fn parse(&self) -> Result<HoursMap> {
-		self.interna_response.results.get(0).ok_or(errors::SmError::NoData)?.data.data.iter().map(|e| -> Result<(usize, Hours)> {
+    pub fn parse(&self) -> Result<SchoolHoursMap> {
+		self.0.data.iter().map(|e| -> Result<(usize, SchoolHours)> {
 			let mut times = Vec::new();
-			for (i, start) in e.fromByDay.iter().enumerate() {
-				times.push((NaiveTime::parse_from_str(start, "%H:%M:%S")?, NaiveTime::parse_from_str(&e.untilByDay[i], "%H:%M:%S")?))
+			for (i, start) in e.from_by_day.iter().enumerate() {
+				times.push((NaiveTime::parse_from_str(start, "%H:%M:%S")?, NaiveTime::parse_from_str(&e.until_by_day[i], "%H:%M:%S")?))
 			}
 			Ok((e.number, times))
 		}).collect()
@@ -205,8 +211,7 @@ mod tests {
         const PATH: &'static str = "src/test_table.json";
         let file = std::fs::File::open(PATH)?;
         let reader = std::io::BufReader::new(file);
-        let timetable: SmTimetable = SmTimetable::from_reader(Box::new(reader))?;
-        assert!(timetable.is_success());
+        let _timetable: SmTimetable = SmTimetable::from_reader(Box::new(reader))?;
         Ok(())
     }
 
@@ -227,9 +232,8 @@ mod tests {
         const PATH: &'static str = "src/test_hours.json";
         let file = std::fs::File::open(PATH)?;
         let reader = std::io::BufReader::new(file);
-        let timetable: SmHours = SmHours::from_reader(Box::new(reader))?;
-        assert!(timetable.is_success());
-        let _parsed = timetable.parse()?;
+        let hours: SmHours = SmHours::from_reader(Box::new(reader))?;
+        let _parsed = hours.parse()?;
         println!("{:#?}", _parsed);
         Ok(())
     }
@@ -244,8 +248,7 @@ mod tests {
         };
         let schulmanager: Schulmanager = Schulmanager::login_office(user).await.unwrap();
         let this_week: IsoWeek = Local::today().iso_week();
-        let timetable: SmTimetable = schulmanager.get_timetable(this_week.week(), None).await.unwrap();
-        assert!(timetable.is_success());
+        let _timetable: SmTimetable = schulmanager.get_timetable(this_week.week(), None).await.unwrap();
         let hours: SmHours = schulmanager.get_hours().await.unwrap();
         assert!(hours.is_success());
     }
@@ -256,8 +259,7 @@ mod tests {
         let token = String::from(std::env::var("SM_TEST_JWT").expect("SM_TEST_JWT is not defined"));
         let schulmanager: Schulmanager = Schulmanager::new(ClientAuthMethod::JwtAuth(token)).await.unwrap();
         let this_week: IsoWeek = Local::today().iso_week();
-        let timetable: SmTimetable = schulmanager.get_timetable(this_week.week(), None).await.unwrap();
-        assert!(timetable.is_success());
+        let _timetable: SmTimetable = schulmanager.get_timetable(this_week.week(), None).await.unwrap();
         let hours: SmHours = schulmanager.get_hours().await.unwrap();
         assert!(hours.is_success());
     }

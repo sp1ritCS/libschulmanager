@@ -12,6 +12,10 @@ pub enum SmError {
     NoJwt,
     #[error("schuldmanager-online.de did not return any data")]
     NoData,
+    #[error("schuldmanager-online.de did not return the expected data")]
+    IncorrectData,
+    #[error("called get() on uninitialized data")]
+    UninitializedData,
     #[error("Unknown Office SSO Error")]
     UnknownMS,
     #[error("Incorrect Microsoft username or password")]

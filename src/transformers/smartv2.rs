@@ -1,4 +1,4 @@
-use crate::sm_req::SmTimetableResponse::{Results, ActualLesson as InternaActualLesson, OriginalLesson as InternaOriginalLesson, Subject as InternaSubject, Teacher as InternaTeacher, Class as InternaClass, StudentGroup as InternaStudentGroup, Event as InternaEvent};
+use crate::sm::timetable::response::{Result, ActualLesson as InternaActualLesson, OriginalLesson as InternaOriginalLesson, Subject as InternaSubject, Teacher as InternaTeacher, Class as InternaClass, StudentGroup as InternaStudentGroup, Event as InternaEvent};
 use std::collections::BTreeMap;
 use chrono::{Weekday, NaiveDate, Datelike};
 use serde::Serialize;
@@ -72,7 +72,7 @@ pub struct Lesson {
 }
 impl Lesson {
     pub fn from_actual(lesson: InternaActualLesson, comment: Option<String>) -> Self {
-        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.studentGroups);
+        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.student_groups);
         Lesson {
             room: lesson.room.name,
             subject: Subject::new(lesson.subject),
@@ -80,11 +80,11 @@ impl Lesson {
             classes,
             student_groups,
             comment,
-            subject_label: lesson.subjectLabel
+            subject_label: lesson.subject_label
         }
     }
     pub fn from_orig(lesson: InternaOriginalLesson, comment: Option<String>) -> Self {
-        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.studentGroups);
+        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.student_groups);
         Lesson {
             room: lesson.room.name,
             subject: Subject::new(lesson.subject),
@@ -92,7 +92,7 @@ impl Lesson {
             classes,
             student_groups,
             comment,
-            subject_label: lesson.subjectLabel
+            subject_label: lesson.subject_label
         }
     }
     pub fn from_orig_vec(lessons: &Vec<InternaOriginalLesson>, comment: Option<String>) -> Option<Self> {
@@ -113,7 +113,7 @@ pub struct Event {
 }
 impl Event {
     pub fn new(event: InternaEvent) -> Self {
-        let (classes, student_groups) = string_vec_calc(event.classes, event.studentGroups);
+        let (classes, student_groups) = string_vec_calc(event.classes, event.student_groups);
         Event {
             text: event.text,
             teachers: Teacher::new_vec(event.teachers),
@@ -149,26 +149,26 @@ pub struct DayMap {
     pub map: BTreeMap<NaiveDate, BTreeMap<usize, Vec<TimetableElement>>>
 }
 impl DayMap {
-    pub fn from_interna(interna_timetable: Results) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_interna(interna_timetable: Result) -> std::result::Result<Self, Box<dyn std::error::Error>> {
         let mut map = BTreeMap::new();
-        for ilesson in interna_timetable.data {
+        for ilesson in interna_timetable {
             #[allow(unused_assignments)]
             let mut tte: Option<TimetableElement> = None;
-            if ilesson.isNew.is_some() {
+            if ilesson.is_new.is_some() {
                 tte = Some(TimetableElement::Event(Event::new(skip_none!(ilesson.event))))
-            } else if ilesson.isSubstitution.is_some() {
-                tte = Some(TimetableElement::Substitution(Lesson::from_actual(skip_none!(ilesson.actualLesson), ilesson.comment.clone()), skip_none!(Lesson::from_orig_vec(skip_none!(&ilesson.originalLessons), ilesson.comment))));
-            } else if ilesson.isCancelled.is_some() {
-                tte = Some(TimetableElement::Cancelled(skip_none!(Lesson::from_orig_vec(skip_none!(&ilesson.originalLessons), ilesson.comment.clone()))));
+            } else if ilesson.is_substitution.is_some() {
+                tte = Some(TimetableElement::Substitution(Lesson::from_actual(skip_none!(ilesson.actual_lesson), ilesson.comment.clone()), skip_none!(Lesson::from_orig_vec(skip_none!(&ilesson.original_lessons), ilesson.comment))));
+            } else if ilesson.is_cancelled.is_some() {
+                tte = Some(TimetableElement::Cancelled(skip_none!(Lesson::from_orig_vec(skip_none!(&ilesson.original_lessons), ilesson.comment.clone()))));
             } else {
-                tte = Some(TimetableElement::Lesson(Lesson::from_actual(skip_none!(ilesson.actualLesson), ilesson.comment.clone())));
+                tte = Some(TimetableElement::Lesson(Lesson::from_actual(skip_none!(ilesson.actual_lesson), ilesson.comment.clone())));
             }
             let date = NaiveDate::parse_from_str(&ilesson.date, "%F")?;
             match map.get_mut(&date) {
-                Some(val) => check_treemap(val, ilesson.classHour.number.parse()?, skip_none!(tte)),
+                Some(val) => check_treemap(val, ilesson.class_hour.number.parse()?, skip_none!(tte)),
                 None => {
                     map.insert(date, BTreeMap::new());
-                    check_treemap(map.get_mut(&date).unwrap(), ilesson.classHour.number.parse()?, skip_none!(tte))
+                    check_treemap(map.get_mut(&date).unwrap(), ilesson.class_hour.number.parse()?, skip_none!(tte))
                 }
             }
         }
@@ -187,7 +187,7 @@ pub struct Weekdays {
     pub friday: BTreeMap<usize, Vec<TimetableElement>>
 }
 impl Weekdays {
-    pub fn from_interna(interna_timetable: Results) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_interna(interna_timetable: Result) -> std::result::Result<Self, Box<dyn std::error::Error>> {
         let mut week = Self {
             monday: BTreeMap::new(),
             tuesday: BTreeMap::new(),
@@ -195,25 +195,25 @@ impl Weekdays {
             thursday: BTreeMap::new(),
             friday: BTreeMap::new()
         };
-        for ilesson in interna_timetable.data {
+        for ilesson in interna_timetable {
             #[allow(unused_assignments)]
             let mut tte: Option<TimetableElement> = None;
-            if ilesson.isNew.is_some() {
+            if ilesson.is_new.is_some() {
                 tte = Some(TimetableElement::Event(Event::new(skip_none!(ilesson.event))))
-            } else if ilesson.isSubstitution.is_some() {
-                tte = Some(TimetableElement::Substitution(Lesson::from_actual(skip_none!(ilesson.actualLesson), ilesson.comment.clone()), skip_none!(Lesson::from_orig_vec(skip_none!(&ilesson.originalLessons), ilesson.comment))));
-            } else if ilesson.isCancelled.is_some() {
-                tte = Some(TimetableElement::Cancelled(skip_none!(Lesson::from_orig_vec(skip_none!(&ilesson.originalLessons), ilesson.comment.clone()))));
+            } else if ilesson.is_substitution.is_some() {
+                tte = Some(TimetableElement::Substitution(Lesson::from_actual(skip_none!(ilesson.actual_lesson), ilesson.comment.clone()), skip_none!(Lesson::from_orig_vec(skip_none!(&ilesson.original_lessons), ilesson.comment))));
+            } else if ilesson.is_cancelled.is_some() {
+                tte = Some(TimetableElement::Cancelled(skip_none!(Lesson::from_orig_vec(skip_none!(&ilesson.original_lessons), ilesson.comment.clone()))));
             } else {
-                tte = Some(TimetableElement::Lesson(Lesson::from_actual(skip_none!(ilesson.actualLesson), ilesson.comment.clone())));
+                tte = Some(TimetableElement::Lesson(Lesson::from_actual(skip_none!(ilesson.actual_lesson), ilesson.comment.clone())));
             }
             let date = NaiveDate::parse_from_str(&ilesson.date, "%F")?;
             match date.weekday() {
-                Weekday::Mon => check_treemap(&mut week.monday, ilesson.classHour.number.parse()?, skip_none!(tte)),
-                Weekday::Tue => check_treemap(&mut week.tuesday, ilesson.classHour.number.parse()?, skip_none!(tte)),
-                Weekday::Wed => check_treemap(&mut week.wednesday, ilesson.classHour.number.parse()?, skip_none!(tte)),
-                Weekday::Thu => check_treemap(&mut week.thursday, ilesson.classHour.number.parse()?, skip_none!(tte)),
-                Weekday::Fri => check_treemap(&mut week.friday, ilesson.classHour.number.parse()?, skip_none!(tte)),
+                Weekday::Mon => check_treemap(&mut week.monday, ilesson.class_hour.number.parse()?, skip_none!(tte)),
+                Weekday::Tue => check_treemap(&mut week.tuesday, ilesson.class_hour.number.parse()?, skip_none!(tte)),
+                Weekday::Wed => check_treemap(&mut week.wednesday, ilesson.class_hour.number.parse()?, skip_none!(tte)),
+                Weekday::Thu => check_treemap(&mut week.thursday, ilesson.class_hour.number.parse()?, skip_none!(tte)),
+                Weekday::Fri => check_treemap(&mut week.friday, ilesson.class_hour.number.parse()?, skip_none!(tte)),
                 _ => {
                     eprintln!("The \"smart\" representation does not suport lessons on sat/sun");
                 }

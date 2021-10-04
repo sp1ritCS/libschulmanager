@@ -1,5 +1,5 @@
 use std::collections::BTreeMap;
-use crate::sm_req::SmTimetableResponse::{Results, ActualLesson, OriginalLesson, Subject, Teacher, Class, StudentGroup};
+use crate::sm::timetable::response::{Result as TResult, ActualLesson, OriginalLesson, Subject, Teacher, Class, StudentGroup};
 use chrono::{NaiveDate, Datelike, Weekday};
 use std::clone::Clone;
 use serde::Serialize;
@@ -72,7 +72,7 @@ struct SmLesson {
 }
 impl SmLesson {
     pub fn from_actual(lesson: ActualLesson, status: SmLessonStatus, comment: Option<String>) -> Self {
-        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.studentGroups);
+        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.student_groups);
         SmLesson {
             status: status,
             room: lesson.room.name,
@@ -81,11 +81,11 @@ impl SmLesson {
             classes: classes,
             student_groups: student_groups,
             comment: comment,
-            subject_label: lesson.subjectLabel
+            subject_label: lesson.subject_label
         }
     }
     pub fn from_orig(lesson: OriginalLesson, status: SmLessonStatus, comment: Option<String>) -> Self {
-        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.studentGroups);
+        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.student_groups);
         SmLesson {
             status: status,
             room: lesson.room.name,
@@ -94,7 +94,7 @@ impl SmLesson {
             classes: classes,
             student_groups: student_groups,
             comment: comment,
-            subject_label: lesson.subjectLabel
+            subject_label: lesson.subject_label
         }
     }
     pub fn from_orig_vec(lessons: &Vec<OriginalLesson>, status: SmLessonStatus, comment: Option<String>) -> Option<Self> {
@@ -128,7 +128,7 @@ struct SmSubstitutedLesson {
 }
 impl SmSubstitutedLesson {
     pub fn from_orig(lesson: OriginalLesson, comment: Option<String>) -> Self {
-        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.studentGroups);
+        let (classes, student_groups) = string_vec_calc(lesson.classes, lesson.student_groups);
         SmSubstitutedLesson {
             room: lesson.room.name,
             subject: SmSubject::new(lesson.subject),
@@ -136,7 +136,7 @@ impl SmSubstitutedLesson {
             classes: classes,
             student_groups: student_groups,
             comment: comment,
-            subject_label: lesson.subjectLabel
+            subject_label: lesson.subject_label
         }
     }
     pub fn from_orig_vec(lessons: &Vec<OriginalLesson>, comment: Option<String>) -> Option<Self> {
@@ -171,7 +171,7 @@ macro_rules! skip_none {
 }
 
 impl SmWeek {
-    pub fn from_interna(interna_timetable: Results) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_interna(interna_timetable: TResult) -> std::result::Result<Self, Box<dyn std::error::Error>> {
         let mut week = Self {
             monday: BTreeMap::new(),
             tuesday: BTreeMap::new(),
@@ -179,24 +179,24 @@ impl SmWeek {
             thursday: BTreeMap::new(),
             friday: BTreeMap::new()
         };
-        for ilesson in interna_timetable.data {
+        for ilesson in interna_timetable {
             #[allow(unused_assignments)]
             let mut lesson: Option<SmLesson> = None;
-            if ilesson.isSubstitution.is_some() {
-                let status = SmLessonStatus::Substitution(skip_none!(SmSubstitutedLesson::from_orig_vec(skip_none!(&ilesson.originalLessons), ilesson.comment.clone())));
-                lesson = Some(SmLesson::from_actual(skip_none!(ilesson.actualLesson), status, ilesson.comment));
-            } else if ilesson.isCancelled.is_some() {
-                lesson = Some(skip_none!(SmLesson::from_orig_vec(skip_none!(&ilesson.originalLessons), SmLessonStatus::Cancelled, ilesson.comment)));
+            if ilesson.is_substitution.is_some() {
+                let status = SmLessonStatus::Substitution(skip_none!(SmSubstitutedLesson::from_orig_vec(skip_none!(&ilesson.original_lessons), ilesson.comment.clone())));
+                lesson = Some(SmLesson::from_actual(skip_none!(ilesson.actual_lesson), status, ilesson.comment));
+            } else if ilesson.is_cancelled.is_some() {
+                lesson = Some(skip_none!(SmLesson::from_orig_vec(skip_none!(&ilesson.original_lessons), SmLessonStatus::Cancelled, ilesson.comment)));
             } else {
-                lesson = Some(SmLesson::from_actual(skip_none!(ilesson.actualLesson), SmLessonStatus::Lesson, ilesson.comment));
+                lesson = Some(SmLesson::from_actual(skip_none!(ilesson.actual_lesson), SmLessonStatus::Lesson, ilesson.comment));
             }
             let date = NaiveDate::parse_from_str(&ilesson.date, "%F")?;
             match date.weekday() {
-                Weekday::Mon => week.monday.insert(ilesson.classHour.number.parse()?, skip_none!(lesson)),
-                Weekday::Tue => week.tuesday.insert(ilesson.classHour.number.parse()?, skip_none!(lesson)),
-                Weekday::Wed => week.wednesday.insert(ilesson.classHour.number.parse()?, skip_none!(lesson)),
-                Weekday::Thu => week.thursday.insert(ilesson.classHour.number.parse()?, skip_none!(lesson)),
-                Weekday::Fri => week.friday.insert(ilesson.classHour.number.parse()?, skip_none!(lesson)),
+                Weekday::Mon => week.monday.insert(ilesson.class_hour.number.parse()?, skip_none!(lesson)),
+                Weekday::Tue => week.tuesday.insert(ilesson.class_hour.number.parse()?, skip_none!(lesson)),
+                Weekday::Wed => week.wednesday.insert(ilesson.class_hour.number.parse()?, skip_none!(lesson)),
+                Weekday::Thu => week.thursday.insert(ilesson.class_hour.number.parse()?, skip_none!(lesson)),
+                Weekday::Fri => week.friday.insert(ilesson.class_hour.number.parse()?, skip_none!(lesson)),
                 _ => {
                     eprintln!("The \"smart\" representation does not suport lessons on sat/sun");
                     None

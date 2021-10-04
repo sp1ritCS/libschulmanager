@@ -1,6 +1,6 @@
 [package]
 name = "libschulmanager"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["sp1rit <sp1rit@disroot.org>"]
 edition = "2018"
 
