@@ -99,28 +99,28 @@ impl Schulmanager {
         Self::new(ClientAuthMethod::JwtAuth(token)).await
     }
 
-    pub async fn get_timetable(&self, week: u32, year: Option<i32>) -> Result<SmTimetable> {
-    	let body = vec![sm_req::SmTimetableRequest::Body::new(self.student_id, self.student_class_id, week, year)];
+	pub async fn get_timetable(&self, week: u32, year: Option<i32>) -> Result<SmTimetable> {
+		let body = sm_req::SmTimetableRequest::Body::new_timetable_body(self.student_id, self.student_class_id, week, year);
 
-    	let mut get_timetable_request = Request::builder()
+		let mut get_timetable_request = Request::builder()
 			.method(Method::POST)
 			.uri("https://login.schulmanager-online.de/api/calls")
 			.body(serde_json::to_string(&body)?)?;
 		set_json(get_timetable_request.headers_mut());
 		set_jwt(get_timetable_request.headers_mut(), &self.token)?;
 
-		let resp: Vec<sm_req::SmTimetableResponse::Response> = self.client.send_async(get_timetable_request).await?
+		let resp = self.client.send_async(get_timetable_request).await?
 			.json().await?;
 
 		Ok(SmTimetable{
-            interna_timetable: resp
-        })
-    }
+			interna_timetable: resp
+		})
+	}
 
-    pub async fn get_hours(&self) -> Result<SmHours> {
-    	let body = sm_req::SmCallRequest::Body::new_hours_body();
+	pub async fn get_hours(&self) -> Result<SmHours> {
+		let body = sm_req::SmCallRequest::Body::new_hours_body();
 
-    	let mut get_timetable_request = Request::builder()
+		let mut get_timetable_request = Request::builder()
 			.method(Method::POST)
 			.uri("https://login.schulmanager-online.de/api/calls")
 			.body(serde_json::to_string(&body)?)?;
@@ -131,13 +131,13 @@ impl Schulmanager {
 			.json().await?;
 
 		Ok(SmHours{
-            interna_response: resp
-        })
-    }
+			interna_response: resp
+		})
+	}
 }
 
 pub struct SmTimetable {
-    interna_timetable: Vec<sm_req::SmTimetableResponse::Response>
+	interna_timetable: sm_req::SmTimetableResponse::Response
 }
 
 impl SmTimetable {
@@ -148,7 +148,7 @@ impl SmTimetable {
     }
     pub fn is_success(&self) -> bool {
         let mut success: bool = true;
-        for table in &self.interna_timetable {
+        for table in &self.interna_timetable.results {
             if table.status < 200 || table.status >= 300 {
                 success = false;
             }

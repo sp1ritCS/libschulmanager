@@ -55,16 +55,16 @@ pub mod SmTimetableRequest {
     }
 
     #[derive(Serialize, Debug)]
-    pub struct Body {
+    pub struct Request {
         pub moduleName: String,
         pub endpointName: String,
         pub parameters: TimetableBodyParams
     }
-    impl Body {
+    impl Request {
         pub fn new(id: usize, class_id: usize, week: u32, oyear: Option<i32>) -> Self {
             let year = oyear.unwrap_or(Local::now().year());
             let (mon, sun) = week_bounds(week, year);
-            Body {
+            Request {
                 moduleName: String::from("schedules"),
                 endpointName: String::from("get-actual-lessons"),
                 parameters: TimetableBodyParams {
@@ -75,6 +75,20 @@ pub mod SmTimetableRequest {
                     start: mon.format("%F").to_string(),
                     end: sun.format("%F").to_string()
                 }
+            }
+        }
+    }
+
+    #[derive(Serialize, Debug)]
+    pub struct Body {
+        pub bundleVersion: String,
+        pub requests: Vec<Request>
+    }
+    impl Body {
+        pub fn new_timetable_body(id: usize, class_id: usize, week: u32, oyear: Option<i32>) -> Self {
+            Self {
+                bundleVersion: String::from("fee1dead"),
+                requests: vec![Request::new(id, class_id, week, oyear)]
             }
         }
     }
@@ -170,10 +184,16 @@ pub mod SmTimetableResponse {
     }
 
     #[derive(Deserialize, Debug)]
-    pub struct Response {
+    pub struct Results {
         pub status: u16,
         pub data: Vec<Datum>
     }
+
+	#[derive(Deserialize, Debug)]
+	pub struct Response {
+		pub results: Vec<Results>,
+		pub systemStatusMessages: Vec<serde_json::Value>
+	}
 }
 
 pub mod SmCallRequest {

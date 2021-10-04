@@ -1,4 +1,4 @@
-use crate::sm_req::SmTimetableResponse::{Response, ActualLesson as InternaActualLesson, OriginalLesson as InternaOriginalLesson, Subject as InternaSubject, Teacher as InternaTeacher, Class as InternaClass, StudentGroup as InternaStudentGroup, Event as InternaEvent};
+use crate::sm_req::SmTimetableResponse::{Results, ActualLesson as InternaActualLesson, OriginalLesson as InternaOriginalLesson, Subject as InternaSubject, Teacher as InternaTeacher, Class as InternaClass, StudentGroup as InternaStudentGroup, Event as InternaEvent};
 use std::collections::BTreeMap;
 use chrono::{Weekday, NaiveDate, Datelike};
 use serde::Serialize;
@@ -149,7 +149,7 @@ pub struct DayMap {
     pub map: BTreeMap<NaiveDate, BTreeMap<usize, Vec<TimetableElement>>>
 }
 impl DayMap {
-    pub fn from_interna(interna_timetable: Response) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_interna(interna_timetable: Results) -> std::result::Result<Self, Box<dyn std::error::Error>> {
         let mut map = BTreeMap::new();
         for ilesson in interna_timetable.data {
             #[allow(unused_assignments)]
@@ -187,7 +187,7 @@ pub struct Weekdays {
     pub friday: BTreeMap<usize, Vec<TimetableElement>>
 }
 impl Weekdays {
-    pub fn from_interna(interna_timetable: Response) -> std::result::Result<Self, Box<dyn std::error::Error>> {
+    pub fn from_interna(interna_timetable: Results) -> std::result::Result<Self, Box<dyn std::error::Error>> {
         let mut week = Self {
             monday: BTreeMap::new(),
             tuesday: BTreeMap::new(),
